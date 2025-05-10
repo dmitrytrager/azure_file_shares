@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+
+require "bundler/setup"
+require "azure_file_shares"
+require "irb"
+
+# Load environment variables from .env file if available
+begin
+  require 'dotenv'
+  Dotenv.load
+rescue LoadError
+  # dotenv not available, skip
+end
+
+# Configure the client if environment variables are available
+if ENV["AZURE_TENANT_ID"] && ENV["AZURE_CLIENT_ID"] && 
+   ENV["AZURE_CLIENT_SECRET"] && ENV["AZURE_SUBSCRIPTION_ID"]
+  
+  puts "Configuring AzureFileShares with environment variables..."
+  
+  AzureFileShares.configure do |config|
+    config.tenant_id = ENV["AZURE_TENANT_ID"]
+    config.client_id = ENV["AZURE_CLIENT_ID"]
+    config.client_secret = ENV["AZURE_CLIENT_SECRET"]
+    config.subscription_id = ENV["AZURE_SUBSCRIPTION_ID"]
+    config.resource_group_name = ENV["AZURE_RESOURCE_GROUP"]
+    config.storage_account_name = ENV["AZURE_STORAGE_ACCOUNT"]
+    
+    # Enable logging for development
+    config.logger = Logger.new(STDOUT)
+    config.logger.level = Logger::INFO
+  end
+  
+  puts "Configuration set! You can access the client with AzureFileShares.client"
+else
+  puts "Azure credentials not found in environment variables."
+  puts "Use AzureFileShares.configure do |config| ... end to set up the client."
+end
+
+IRB.start(__FILE__)

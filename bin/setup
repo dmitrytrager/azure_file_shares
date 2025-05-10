@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+IFS=$'\n\t'
+set -vx
+
+bundle install
+
+# Do any other setup tasks here
+mkdir -p spec/fixtures/vcr_cassettes
+
+# Create sample .env file if it doesn't exist
+if [ ! -f .env ]; then
+  cat > .env << EOL
+# Azure credentials
+AZURE_TENANT_ID=your-tenant-id
+AZURE_CLIENT_ID=your-client-id
+AZURE_CLIENT_SECRET=your-client-secret
+AZURE_SUBSCRIPTION_ID=your-subscription-id
+AZURE_RESOURCE_GROUP=your-resource-group
+AZURE_STORAGE_ACCOUNT=your-storage-account
+EOL
+  echo "Created sample .env file. Update it with your Azure credentials."
+fi
