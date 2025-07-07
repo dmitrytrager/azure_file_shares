@@ -18,7 +18,7 @@ module AzureFileShares
         path = build_file_path(share_name, directory_path)
 
         # Use direct approach for directory creation
-        url = URI.encode_www_form_component("#{file_base_url}#{path}?restype=directory")
+        url = "#{file_base_url}#{path}?restype=directory"
 
         # Create headers with authorization
         headers = {
@@ -68,7 +68,7 @@ module AzureFileShares
         path = build_file_path(share_name, directory_path)
 
         # Build URL with query parameters
-        url = URI.encode_www_form_component("#{file_base_url}#{path}?restype=directory&comp=list")
+        url = "#{file_base_url}#{path}?restype=directory&comp=list"
 
         # Add additional query parameters
         url += "&prefix=#{URI.encode_www_form_component(options[:prefix])}" if options[:prefix]
@@ -118,7 +118,7 @@ module AzureFileShares
         path = build_file_path(share_name, directory_path)
 
         # Use direct approach for HEAD requests
-        url = URI.encode_www_form_component("#{file_base_url}#{path}")
+        url = "#{file_base_url}#{path}"
 
         # Add restype parameter
         url += "?restype=directory"
@@ -155,7 +155,7 @@ module AzureFileShares
         path = build_file_path(share_name, directory_path)
 
         # Build URL with query parameters
-        url = URI.encode_www_form_component("#{file_base_url}#{path}?restype=directory")
+        url = "#{file_base_url}#{path}?restype=directory"
 
         # Add recursive parameter if specified
         url += "&recursive=true" if options[:recursive]
@@ -213,7 +213,7 @@ module AzureFileShares
         end
 
         # 1. Create the file with specified size
-        create_url = URI.encode_www_form_component("#{file_base_url}#{path}")
+        create_url = "#{file_base_url}#{path}"
 
         # Create headers for file creation
         create_headers = {
@@ -254,7 +254,7 @@ module AzureFileShares
         end
 
         # 2. Upload the content (for small files - large files would use ranges)
-        range_url = URI.encode_www_form_component("#{file_base_url}#{path}?comp=range")
+        range_url = "#{file_base_url}#{path}?comp=range"
 
         # Create headers for content upload
         range_headers = {
@@ -302,7 +302,7 @@ module AzureFileShares
         path = build_file_path(share_name, file_path)
 
         # Build URL
-        url = URI.encode_www_form_component("#{file_base_url}#{path}")
+        url = "#{file_base_url}#{path}"
 
         # Create headers with authorization
         headers = {
@@ -350,7 +350,7 @@ module AzureFileShares
         path = build_file_path(share_name, file_path)
 
         # Use the same direct approach as get_file_properties for HEAD requests
-        url = URI.encode_www_form_component("#{file_base_url}#{path}")
+        url = "#{file_base_url}#{path}"
 
         # Create headers with authorization
         headers = {
@@ -386,7 +386,7 @@ module AzureFileShares
 
         # For HEAD requests, we need to handle the response directly in file_request
         # to capture the headers but not process the body
-        url = URI.encode_www_form_component("#{file_base_url}#{path}")
+        url = "#{file_base_url}#{path}"
 
         # Create headers with authorization
         headers = {
@@ -429,7 +429,7 @@ module AzureFileShares
         path = build_file_path(share_name, file_path)
 
         # Build URL
-        url = URI.encode_www_form_component("#{file_base_url}#{path}")
+        url = "#{file_base_url}#{path}"
 
         # Create headers with authorization
         headers = {
@@ -483,7 +483,7 @@ module AzureFileShares
         dest_path = build_file_path(dest_share_name, dest_file_path)
 
         # Build URL
-        url = URI.encode_www_form_component("#{file_base_url}#{dest_path}")
+        url = "#{file_base_url}#{dest_path}"
 
         # Create headers with authorization
         headers = {
@@ -538,7 +538,7 @@ module AzureFileShares
         return "" if path.nil? || path.empty? || path == "/"
         path = path.start_with?("/") ? path[1..-1] : path
         path = path.end_with?("/") ? path[0..-2] : path
-        path
+        path.split("/").map { |seg| URI.encode_www_form_component(seg) }.join("/")
       end
 
       # Build a file API path
