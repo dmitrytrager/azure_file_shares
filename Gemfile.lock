@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    azure_file_shares (0.1.2)
+    azure_file_shares (0.1.3)
       faraday (~> 2.7)
       faraday-retry (~> 2.0)
       jwt (~> 2.7)

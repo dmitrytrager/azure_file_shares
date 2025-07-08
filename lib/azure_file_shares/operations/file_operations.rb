@@ -475,7 +475,8 @@ module AzureFileShares
         # Build source file URL
         source_directory_path = normalize_path(source_directory_path)
         source_file_path = File.join(source_directory_path, source_file_name)
-        source_url = "#{file_base_url}/#{source_share_name}/#{source_file_path}"
+        source_path = build_file_path(source_share_name, source_file_path)
+        source_url = "#{file_base_url}#{source_path}"
 
         # Build destination path
         dest_directory_path = normalize_path(dest_directory_path)
