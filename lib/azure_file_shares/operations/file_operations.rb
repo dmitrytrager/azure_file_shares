@@ -71,7 +71,7 @@ module AzureFileShares
         url = "#{file_base_url}#{path}?restype=directory&comp=list"
 
         # Add additional query parameters
-        url += "&prefix=#{URI.encode_www_form_component(options[:prefix])}" if options[:prefix]
+        url += "&prefix=#{ERB::Util.url_encode(options[:prefix])}" if options[:prefix]
         url += "&maxresults=#{options[:maxresults]}" if options[:maxresults]
 
         # Query parameters for authorization
@@ -539,7 +539,7 @@ module AzureFileShares
         return "" if path.nil? || path.empty? || path == "/"
         path = path.start_with?("/") ? path[1..-1] : path
         path = path.end_with?("/") ? path[0..-2] : path
-        path.split("/").map { |seg| URI.encode_www_form_component(seg) }.join("/")
+        path.split("/").map { |seg| ERB::Util.url_encode(seg) }.join("/")
       end
 
       # Build a file API path
