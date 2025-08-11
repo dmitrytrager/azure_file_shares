@@ -2,6 +2,7 @@ module AzureFileShares
   module Operations
     # Operations for Azure File Shares - File and Directory Operations
     class FileOperations < BaseOperation
+      MAX_RANGE_SIZE = 4 * 1024 * 1024 # 4 MB
       # Base URL for Azure File storage API
       # @return [String] File API base URL
       def file_base_url
@@ -266,26 +267,43 @@ module AzureFileShares
           "Content-Type" => "application/x-www-form-urlencoded",
         }
 
-        # Calculate authorization header for range upload
-        range_auth_header = calculate_authorization_header(:put, path, range_headers, { comp: "range" })
-        range_headers["Authorization"] = range_auth_header if range_auth_header
+        cursor = 0
+        result = nil
+        loop do
+          # Calculate the range for this chunk
+          range_start = cursor
+          range_end = [ cursor + MAX_RANGE_SIZE - 1, content_length - 1 ].min
+          range_headers["x-ms-range"] = "bytes=#{range_start}-#{range_end}"
 
-        # Log request details if a logger is available
-        if client.logger
-          client.logger.debug "Azure File API Upload Range Request: PUT #{range_url}"
-          client.logger.debug "Headers: #{range_headers.reject { |k, _| k == 'Authorization' }.inspect}"
-          client.logger.debug "Content length: #{content_length}"
+          # Extract the content for this range
+          if content.is_a?(IO) || content.is_a?(StringIO)
+            content.seek(range_start)
+            content_chunk = content.read(range_end - range_start + 1)
+          else
+            content_chunk = content[range_start..range_end]
+          end
+
+          # Update the content length for this chunk
+          range_headers["Content-Length"] = (range_end - range_start + 1).to_s
+
+          # Calculate authorization header for range upload
+          range_auth_header = calculate_authorization_header(:put, path, range_headers, { comp: "range" })
+          range_headers["Authorization"] = range_auth_header if range_auth_header
+
+          # Log the current range being uploaded
+          if client.logger
+            client.logger.debug "Uploading range: #{range_headers['x-ms-range']}"
+          end
+
+          # Make the request to upload the content chunk
+          result = upload_range(connection, range_url, content_chunk, range_headers)
+          break unless result
+
+          cursor += MAX_RANGE_SIZE
+          break if cursor >= content_length
         end
 
-        # Make the request to upload the content
-        range_response = connection.put(range_url, content, range_headers)
-
-        # Check range response
-        if range_response.status >= 200 && range_response.status < 300
-          true
-        else
-          handle_file_response(range_response)
-        end
+        result
       end
 
       # Download a file from a file share
@@ -710,6 +728,32 @@ module AzureFileShares
           }
 
           conn.adapter Faraday.default_adapter
+        end
+      end
+
+      # Upload a content chunk for a file range
+      # @param [Faraday::Connection] connection Faraday connection
+      # @param [String] range_url URL for the range upload
+      # @param [String] content_chunk Content chunk to upload
+      # @param [Hash] range_headers Headers for the range upload
+      # @return [Faraday::Response] Response from the upload request
+      # @raise [AzureFileShares::Errors::ApiError] If the upload fails
+      def upload_range(connection, range_url, content_chunk, range_headers)
+        # Log request details if a logger is available
+        if client.logger
+          client.logger.debug "Azure File API Upload Range Request: PUT #{range_url}"
+          client.logger.debug "Headers: #{range_headers.reject { |k, _| k == 'Authorization' }.inspect}"
+          client.logger.debug "Content length: #{content_length}"
+        end
+
+        # Make the request to upload the content
+        range_response = connection.put(range_url, content_chunk, range_headers)
+
+        # Check range response
+        if range_response.status >= 200 && range_response.status < 300
+          true
+        else
+          handle_file_response(range_response)
         end
       end
 
